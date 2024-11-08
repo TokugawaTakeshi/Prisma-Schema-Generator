@@ -8,7 +8,7 @@ export default abstract class StringColumnSchemaGenerator {
 
 
   protected abstract getNativeDatabaseTypeAttribute(
-      stringColumnDefinition: PrismaSchemaGenerator.ColumnDefinition.String
+    stringColumnDefinition: PrismaSchemaGenerator.ColumnDefinition.String
   ): string;
 
 

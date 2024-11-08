@@ -5,6 +5,13 @@ import IntegerColumnSchemaGeneratorForPostgreSQL from
 import type StringColumnSchemaGenerator from "./ColumnsSchemasGenerators/String/StringColumnSchemaGenerator";
 import StringColumnSchemaGeneratorForPostgreSQL from
     "./ColumnsSchemasGenerators/String/StringColumnSchemaGeneratorForPostgreSQL";
+import type DateAndTimeColumnSchemaGenerator from
+    "./ColumnsSchemasGenerators/DateAndTime/DateAndTimeColumnSchemaGenerator";
+import DateAndTimeColumnSchemaGeneratorForPostgreSQL from
+    "./ColumnsSchemasGenerators/DateAndTime/DateAndTimeColumnSchemaGeneratorForPostgreSQL";
+import ListColumnSchemaGenerator from
+      "./ColumnsSchemasGenerators/ListColumnSchemaGenerator";
+import AnotherColumnSchemaGenerator from "./ColumnsSchemasGenerators/AnotherColumnSchemaGenerator";
 
 /* ─── Framework ──────────────────────────────────────────────────────────────────────────────────────────────────── */
 import { formatSchema as formatPrismaSchema } from "@prisma/sdk";
@@ -21,6 +28,7 @@ class PrismaSchemaGenerator {
 
   private readonly integerColumnSchemaGenerator: IntegerColumnSchemaGenerator;
   private readonly stringColumnSchemaGenerator: StringColumnSchemaGenerator;
+  private readonly dateAndTimeColumnSchemaGenerator: DateAndTimeColumnSchemaGenerator;
 
 
   public static async generate(
@@ -63,6 +71,7 @@ class PrismaSchemaGenerator {
       case PrismaSchemaGenerator.SupportedDatabaseProviders.PostgreSQL: {
         this.integerColumnSchemaGenerator = new IntegerColumnSchemaGeneratorForPostgreSQL();
         this.stringColumnSchemaGenerator = new StringColumnSchemaGeneratorForPostgreSQL();
+        this.dateAndTimeColumnSchemaGenerator = new DateAndTimeColumnSchemaGeneratorForPostgreSQL()
         break;
       }
 
@@ -138,6 +147,21 @@ class PrismaSchemaGenerator {
     }
 
 
+    if (PrismaSchemaGenerator.isDateAndTimeColumnDefinition(columnDefinition)) {
+      return this.dateAndTimeColumnSchemaGenerator.generate(columnDefinition);
+    }
+
+
+    if (PrismaSchemaGenerator.isRelationReferenceToArrayOfOtherModelsColumnDefinition(columnDefinition)) {
+      return ListColumnSchemaGenerator.generate(columnDefinition);
+    }
+
+
+    if (PrismaSchemaGenerator.isAnotherModelColumnDefinition(columnDefinition)) {
+      return AnotherColumnSchemaGenerator.generate(columnDefinition);
+    }
+
+
     return this.integerColumnSchemaGenerator.generate(columnDefinition);
 
   }
@@ -146,6 +170,24 @@ class PrismaSchemaGenerator {
     columnDefinition: PrismaSchemaGenerator.ColumnDefinition
   ): columnDefinition is PrismaSchemaGenerator.ColumnDefinition.String {
     return typeof columnDefinition.type === "function" && columnDefinition.type.name === "String";
+  }
+
+  private static isDateAndTimeColumnDefinition(
+    columnDefinition: PrismaSchemaGenerator.ColumnDefinition
+  ): columnDefinition is PrismaSchemaGenerator.ColumnDefinition.DateAndTime {
+    return columnDefinition.type === PrismaSchemaGenerator.ColumnDefinition.DateAndTime.TYPE;
+  }
+
+  private static isRelationReferenceToArrayOfOtherModelsColumnDefinition(
+    columnDefinition: PrismaSchemaGenerator.ColumnDefinition
+  ): columnDefinition is PrismaSchemaGenerator.ColumnDefinition.List {
+    return columnDefinition.type === PrismaSchemaGenerator.ColumnDefinition.List.TYPE;
+  }
+
+  private static isAnotherModelColumnDefinition(
+    columnDefinition: PrismaSchemaGenerator.ColumnDefinition
+  ): columnDefinition is PrismaSchemaGenerator.ColumnDefinition.AnotherModel {
+    return columnDefinition.type === PrismaSchemaGenerator.ColumnDefinition.AnotherModel.TYPE;
   }
 
 }
@@ -170,7 +212,10 @@ namespace PrismaSchemaGenerator {
 
   export type ColumnDefinition =
       ColumnDefinition.String |
-      ColumnDefinition.Integer;
+      ColumnDefinition.Integer |
+      ColumnDefinition.DateAndTime |
+      ColumnDefinition.List |
+      ColumnDefinition.AnotherModel;
 
   export namespace ColumnDefinition {
 
@@ -194,6 +239,43 @@ namespace PrismaSchemaGenerator {
       minimalValue?: number;
       maximalValue?: number;
     };
+
+
+    export type DateAndTime = CommonPart & {
+      type: typeof DateAndTime.TYPE;
+      withTimezone: boolean;
+      precision: number;
+    };
+
+    export namespace DateAndTime {
+      export const TYPE: "DATE_TIME" = "DATE_TIME";
+    }
+
+
+    export type List =
+        Omit<CommonPart, "isNullable"> &
+        {
+          type: typeof List.TYPE;
+          elementType: string;
+        };
+
+    export namespace List {
+      export const TYPE: "LIST" = "LIST";
+    }
+
+
+    export type AnotherModel = CommonPart & {
+      type: typeof AnotherModel.TYPE;
+      targetModelName: string;
+      relation: {
+        fields: ReadonlyArray<string>;
+        references: ReadonlyArray<string>;
+      };
+    };
+
+    export namespace AnotherModel {
+      export const TYPE: "ANOTHER_MODEL" = "ANOTHER_MODEL";
+    }
 
   }
 
