@@ -27,7 +27,7 @@ export default class DateAndTimeColumnSchemaGeneratorForMySQL extends DateAndTim
         }),
         title: InvalidConfigError.localization.defaultTitle,
         occurrenceLocation:
-            "IntegerColumnSchemaGeneratorForPostgreSQL.getNativeDatabaseTypeAttribute(dateAndTimeColumnDefinition)"
+            "DateAndTimeColumnSchemaGeneratorForMySQL.getNativeDatabaseTypeAttribute(dateAndTimeColumnDefinition)"
       });
     }
 
@@ -48,8 +48,14 @@ export default class DateAndTimeColumnSchemaGeneratorForMySQL extends DateAndTim
     }
 
 
-    /* [ Source ] https://www.prisma.io/docs/orm/reference/prisma-schema-reference#mysql-6 */
-    return withTimezone ? `@db.Timestamptz(${ precision })` : `@db.Timestamp(${ precision })`;
+    /* [ Theory ]
+    * MySQL converts TIMESTAMP values from the current time zone to UTC for storage, and back from UTC to the current
+    * time zone for retrieval. This does not occur for other types such as DATETIME,
+    * By default, the current time zone for each connection is the server's time.
+    *
+    * [ Reference ] https://dev.mysql.com/doc/refman/8.0/en/datetime.html
+    * [ Reference ] https://www.prisma.io/docs/orm/reference/prisma-schema-reference#mysql-6 */
+    return withTimezone ? `@db.Timestamp(${ precision })` : `@db.DateTime(${ precision })`;
 
   }
 

@@ -13,9 +13,11 @@ export default class IntegerColumnSchemaGeneratorForPostgreSQL extends IntegerCo
     return integerType === IntegerDataTypes.eightBytes ? "BigInt" : "Int";
   }
 
-  protected override getNativeDatabaseTypeAttribute(integerType: IntegerDataTypes): string {
+  protected override getNativeDatabaseTypeAttribute(
+    { type }: PrismaSchemaGenerator.ColumnDefinition.Integer
+  ): string {
 
-    switch (integerType) {
+    switch (type) {
 
       case IntegerDataTypes.oneByte:
       case IntegerDataTypes.twoBytes: {

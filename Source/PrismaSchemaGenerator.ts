@@ -1,16 +1,23 @@
 /* ─── Columns Schemas Generators ─────────────────────────────────────────────────────────────────────────────────── */
 import type IntegerColumnSchemaGenerator from "./ColumnsSchemasGenerators/Integer/IntegerColumnSchemaGenerator";
+import IntegerColumnSchemaGeneratorForMySQL from
+    "./ColumnsSchemasGenerators/Integer/IntegerColumnSchemaGeneratorForMySQL";
 import IntegerColumnSchemaGeneratorForPostgreSQL from
     "./ColumnsSchemasGenerators/Integer/IntegerColumnSchemaGeneratorForPostgreSQL";
 import type StringColumnSchemaGenerator from "./ColumnsSchemasGenerators/String/StringColumnSchemaGenerator";
+import StringColumnSchemaGeneratorForMySQL from "./ColumnsSchemasGenerators/String/StringColumnSchemaGeneratorForMySQL";
 import StringColumnSchemaGeneratorForPostgreSQL from
     "./ColumnsSchemasGenerators/String/StringColumnSchemaGeneratorForPostgreSQL";
 import type DateAndTimeColumnSchemaGenerator from
     "./ColumnsSchemasGenerators/DateAndTime/DateAndTimeColumnSchemaGenerator";
+import DateAndTimeColumnSchemaGeneratorForMySQL from
+    "./ColumnsSchemasGenerators/DateAndTime/DateAndTimeColumnSchemaGeneratorForMySQL";
 import DateAndTimeColumnSchemaGeneratorForPostgreSQL from
     "./ColumnsSchemasGenerators/DateAndTime/DateAndTimeColumnSchemaGeneratorForPostgreSQL";
-import ListColumnSchemaGenerator from
-      "./ColumnsSchemasGenerators/ListColumnSchemaGenerator";
+import type ListColumnSchemaGenerator from "./ColumnsSchemasGenerators/List/ListColumnSchemaGenerator";
+import ListColumnSchemaGeneratorForPostgreSQL from
+    "./ColumnsSchemasGenerators/List/ListColumnSchemaGeneratorForPostgreSQL";
+import ListColumnSchemaGeneratorForMySQL from "./ColumnsSchemasGenerators/List/ListColumnSchemaGeneratorForMySQL";
 import AnotherColumnSchemaGenerator from "./ColumnsSchemasGenerators/AnotherColumnSchemaGenerator";
 
 /* ─── Framework ──────────────────────────────────────────────────────────────────────────────────────────────────── */
@@ -29,6 +36,7 @@ class PrismaSchemaGenerator {
   private readonly integerColumnSchemaGenerator: IntegerColumnSchemaGenerator;
   private readonly stringColumnSchemaGenerator: StringColumnSchemaGenerator;
   private readonly dateAndTimeColumnSchemaGenerator: DateAndTimeColumnSchemaGenerator;
+  private readonly listColumnSchemaGenerator: ListColumnSchemaGenerator;
 
 
   public static async generate(
@@ -68,18 +76,21 @@ class PrismaSchemaGenerator {
 
     switch (this.databaseProvider) {
 
-      case PrismaSchemaGenerator.SupportedDatabaseProviders.PostgreSQL: {
-        this.integerColumnSchemaGenerator = new IntegerColumnSchemaGeneratorForPostgreSQL();
-        this.stringColumnSchemaGenerator = new StringColumnSchemaGeneratorForPostgreSQL();
-        this.dateAndTimeColumnSchemaGenerator = new DateAndTimeColumnSchemaGeneratorForPostgreSQL()
+      case PrismaSchemaGenerator.SupportedDatabaseProviders.MySQL: {
+        this.integerColumnSchemaGenerator = new IntegerColumnSchemaGeneratorForMySQL();
+        this.stringColumnSchemaGenerator = new StringColumnSchemaGeneratorForMySQL();
+        this.dateAndTimeColumnSchemaGenerator = new DateAndTimeColumnSchemaGeneratorForMySQL();
+        this.listColumnSchemaGenerator = new ListColumnSchemaGeneratorForMySQL();
         break;
       }
 
-      // case PrismaSchemaGenerator.SupportedDatabaseProviders.MySQL: {
-      //   this.integerColumnSchemaGenerator = new IntegerColumnSchemaGeneratorForMySQL();
-      //   this.stringColumnSchemaGenerator = new StringColumnSchemaGeneratorForMySQL();
-      //   break;
-      // }
+      case PrismaSchemaGenerator.SupportedDatabaseProviders.PostgreSQL: {
+        this.integerColumnSchemaGenerator = new IntegerColumnSchemaGeneratorForPostgreSQL();
+        this.stringColumnSchemaGenerator = new StringColumnSchemaGeneratorForPostgreSQL();
+        this.dateAndTimeColumnSchemaGenerator = new DateAndTimeColumnSchemaGeneratorForPostgreSQL();
+        this.listColumnSchemaGenerator = new ListColumnSchemaGeneratorForPostgreSQL();
+        break;
+      }
 
       default: {
         Logger.throwErrorAndLog({
@@ -153,7 +164,7 @@ class PrismaSchemaGenerator {
 
 
     if (PrismaSchemaGenerator.isRelationReferenceToArrayOfOtherModelsColumnDefinition(columnDefinition)) {
-      return ListColumnSchemaGenerator.generate(columnDefinition);
+      return this.listColumnSchemaGenerator.generate(columnDefinition);
     }
 
 
@@ -234,6 +245,7 @@ namespace PrismaSchemaGenerator {
 
     export type Integer = CommonPart & {
       type: IntegerDataTypes;
+      isUnsigned: boolean;
       isPrimaryKey?: boolean;
       defaultValue?: number;
       minimalValue?: number;

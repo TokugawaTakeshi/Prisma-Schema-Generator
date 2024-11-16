@@ -13,31 +13,21 @@ export default class IntegerColumnSchemaGeneratorForMySQL extends IntegerColumnS
     return integerType === IntegerDataTypes.eightBytes ? "BigInt" : "Int";
   }
 
-  protected override getNativeDatabaseTypeAttribute(integerType: IntegerDataTypes): string {
+  protected override getNativeDatabaseTypeAttribute(
+    { type, isUnsigned = false }: PrismaSchemaGenerator.ColumnDefinition.Integer
+  ): string {
 
-    switch (integerType) {
-
+    switch (type) {
       case IntegerDataTypes.oneByte:
-      case IntegerDataTypes.twoBytes: {
-
-        return "@db.SmallInt";
-
-      }
-
+          return isUnsigned ? "@db.UnsignedTinyInt" : "@db.TinyInt";
+      case IntegerDataTypes.twoBytes:
+          return isUnsigned ? "@db.UnsignedSmallInt" : "@db.SmallInt";
       case IntegerDataTypes.threeBytes:
-      case IntegerDataTypes.fourBytes: {
-
-        return "@db.Integer";
-
-      }
-
-
-      case IntegerDataTypes.eightBytes: {
-
-        return "@db.BigInt";
-
-      }
-
+          return isUnsigned ? "@db.UnsignedMediumInt" : "@db.MediumInt";
+      case IntegerDataTypes.fourBytes:
+          return isUnsigned ? "@db.UnsignedInt" : "@db.Int";
+      case IntegerDataTypes.eightBytes:
+          return isUnsigned ? "@db.UnsignedBigInt" : "@db.BigInt";
     }
 
   }
