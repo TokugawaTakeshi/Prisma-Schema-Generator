@@ -43,18 +43,20 @@ class PrismaSchemaGenerator {
     {
       generatorProvider,
       databaseProvider,
+      databaseConnectionURI_EnvironmentVariableName,
       modelsDefinitions,
       outputFileAbsolutePath
     }: Readonly<{
       generatorProvider: string;
       databaseProvider: PrismaSchemaGenerator.SupportedDatabaseProviders;
+      databaseConnectionURI_EnvironmentVariableName: string;
       modelsDefinitions: ReadonlyArray<PrismaSchemaGenerator.ModelDefinition>;
       outputFileAbsolutePath: string;
     }>
   ): Promise<void> {
 
     const notFormattedSchema: string = new PrismaSchemaGenerator({ databaseProvider }).
-        generateNotFormattedSchema({ generatorProvider, modelsDefinitions });
+        generateNotFormattedSchema({ generatorProvider, modelsDefinitions, databaseConnectionURI_EnvironmentVariableName });
 
     const formattedSchema: string = await formatPrismaSchema({ schema: notFormattedSchema });
 
@@ -109,9 +111,11 @@ class PrismaSchemaGenerator {
   private generateNotFormattedSchema(
     {
       generatorProvider,
+      databaseConnectionURI_EnvironmentVariableName,
       modelsDefinitions
     }: Readonly<{
       generatorProvider: string;
+      databaseConnectionURI_EnvironmentVariableName: string;
       modelsDefinitions: ReadonlyArray<PrismaSchemaGenerator.ModelDefinition>;
     }>
   ): string {
@@ -127,7 +131,7 @@ class PrismaSchemaGenerator {
 
       "datasource db {",
       `  provider = "${ this.databaseProvider }"`,
-      `  url      = env("DATABASE_URL")`,
+      `  url      = env("${ databaseConnectionURI_EnvironmentVariableName }")`,
       "}",
 
       ...modelsDefinitions.map(this.generateModelSchema.bind(this))

@@ -15,7 +15,7 @@ export default class ListColumnSchemaGeneratorForMySQL extends ListColumnSchemaG
       "Int",
       "BigInt",
       "Boolean"
-    ].includes(elementType) ? `${ name } @db.Json` : `${ name } ${ elementType }[]`;
+    ].includes(elementType) ? `${ name } Json @db.Json` : `${ name } ${ elementType }[]`;
   }
 
 }
