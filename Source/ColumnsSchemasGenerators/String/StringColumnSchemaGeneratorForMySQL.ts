@@ -8,7 +8,7 @@ import {
 } from "@yamato-daiwa/es-extensions";
 
 
-export default class StringColumnSchemaGeneratorForPostgreSQL extends StringColumnSchemaGenerator {
+export default class StringColumnSchemaGeneratorForMySQL extends StringColumnSchemaGenerator {
 
   public override generate(stringColumnDefinition: PrismaSchemaGenerator.ColumnDefinition.String): string {
     return super.fromTemplate(stringColumnDefinition);
@@ -18,7 +18,10 @@ export default class StringColumnSchemaGeneratorForPostgreSQL extends StringColu
     stringColumnDefinition: PrismaSchemaGenerator.ColumnDefinition.String
   ): string {
 
-    if (stringColumnDefinition.isPrimaryKey === true) {
+    if (
+      stringColumnDefinition.isPrimaryKey === true ||
+      stringColumnDefinition.mustBeUnique === true
+    ) {
 
       const maximalCharactersCount: number | undefined =
           stringColumnDefinition.maximalCharactersCount ?? stringColumnDefinition.fixedCharactersCount;
@@ -41,7 +44,28 @@ export default class StringColumnSchemaGeneratorForPostgreSQL extends StringColu
 
 
     if (isNotUndefined(stringColumnDefinition.maximalCharactersCount)) {
+
+      if (stringColumnDefinition.maximalCharactersCount <= 255) {
+        return "@db.TinyText";
+      }
+
+
+      if (stringColumnDefinition.maximalCharactersCount <= 65_535) {
+        return "@db.Text";
+      }
+
+
+      if (stringColumnDefinition.maximalCharactersCount <= 16_777_215) {
+        return "@db.MediumText";
+      }
+
+      if (stringColumnDefinition.maximalCharactersCount <= 4_294_967_295) {
+        return "@db.LongText";
+      }
+
+
       return `@db.VarChar(${ stringColumnDefinition.maximalCharactersCount })`;
+
     }
 
 
