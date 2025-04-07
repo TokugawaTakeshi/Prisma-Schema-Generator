@@ -4,4 +4,4 @@
  * Released under the MIT License.
  */
 
-export { default as  PrismaSchemaGenerator } from "./PrismaSchemaGenerator";
+export { default as PrismaSchemaGenerator } from "./PrismaSchemaGenerator";

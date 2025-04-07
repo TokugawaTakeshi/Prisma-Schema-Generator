@@ -2,12 +2,15 @@ const YamatoDaiwaStyleGuides = require("@yamato-daiwa/style_guides/ECMAScript");
 
 
 module.exports = [
+
   {
     ignores: [
       "Distributable/*"
     ]
   },
+
   ...YamatoDaiwaStyleGuides,
+
   {
     languageOptions: {
       parserOptions: {
@@ -15,6 +18,7 @@ module.exports = [
       }
     }
   },
+
   {
     files: [ "Tests/Manual/**/*.ts", "Documentation/**/*.ts" ],
     rules: {
@@ -23,5 +27,24 @@ module.exports = [
       "no-console": "off"
 
     }
+  },
+
+  {
+
+    files: [
+      "Tests/Manual/**/BusinessRules/**/*.ts"
+    ],
+
+    rules: {
+
+      /* Need to merge type and namespace that is completely valid TypeScript */
+      "@typescript-eslint/no-redeclare": "off",
+
+      /* No problem will occur while invoke the properties by full qualified name */
+      "@typescript-eslint/no-shadow": "off"
+
+    }
+
   }
+
 ];

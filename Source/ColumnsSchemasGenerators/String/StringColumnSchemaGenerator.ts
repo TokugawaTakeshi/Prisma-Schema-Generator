@@ -1,26 +1,51 @@
 import type PrismaSchemaGenerator from "../../PrismaSchemaGenerator";
-import { isNotUndefined } from "@yamato-daiwa/es-extensions";
+import { insertSubstringIf, isNotUndefined } from "@yamato-daiwa/es-extensions";
 
 
 export default abstract class StringColumnSchemaGenerator {
 
-  public abstract generate(stringColumnDefinition: PrismaSchemaGenerator.ColumnDefinition.String): string;
+  public abstract generate(stringPropertyDefinition: PrismaSchemaGenerator.PropertyDefinition.String): string;
 
 
   protected abstract getNativeDatabaseTypeAttribute(
-      stringColumnDefinition: PrismaSchemaGenerator.ColumnDefinition.String
+    stringPropertyDefinition: PrismaSchemaGenerator.PropertyDefinition.String
   ): string;
 
 
-  protected fromTemplate(stringColumnDefinition: PrismaSchemaGenerator.ColumnDefinition.String): string {
+  protected fromTemplate(
+    {
+      propertyName,
+      columnName = propertyName,
+      isNullable,
+      isPrimaryKey,
+      mustBeUnique,
+      defaultValue,
+      ...stringPropertyDefinition
+    }: PrismaSchemaGenerator.PropertyDefinition.String
+  ): string {
     return [
-      stringColumnDefinition.name,
-      " String",
-      ...stringColumnDefinition.isNullable ? [ "?" ] : [],
-      ...stringColumnDefinition.isPrimaryKey === true ? [ " @id" ] : [],
-      ` ${ this.getNativeDatabaseTypeAttribute(stringColumnDefinition) }`,
-      ...isNotUndefined(stringColumnDefinition.defaultValue) ? [ ` @default(${ stringColumnDefinition.defaultValue })` ] : []
-    ].join("");
+
+      `${ propertyName } String${ insertSubstringIf("?", isNullable) }`,
+
+      ...isPrimaryKey === true ? [ "@id" ] : [],
+
+      ...mustBeUnique === true ? [ "@unique" ] : [],
+
+      this.getNativeDatabaseTypeAttribute({
+        propertyName,
+        columnName,
+        isNullable,
+        isPrimaryKey,
+        mustBeUnique,
+        defaultValue,
+        ...stringPropertyDefinition
+      }),
+
+      ...propertyName === columnName ? [] : [ `@map("${ columnName }")` ],
+
+      ...isNotUndefined(defaultValue) ? [ ` @default(${ defaultValue })` ] : []
+
+    ].join(" ");
   }
 
 }

@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("mysql://root:example@localhost:3306/PrismaSchemaGenerator-MinimalExample")
+}
+
+model Product {
+  ID                         String           @id @map("id") @db.VarChar(21)
+  title                      String           @db.TinyText
+  description                String           @db.Text
+  category                   ProductCategory? @relation(fields: [categoryID], references: [ID])
+  categoryID                 String?          @db.Char(21)
+  price__dollars__withoutTax BigInt           @map("price__dollars__includingTax") @db.UnsignedBigInt
+  quantityRemainInStock      BigInt?          @map("quantity_remain_in_stock") @db.UnsignedBigInt
+
+  @@map("products")
+}
+
+model ProductCategory {
+  ID       String    @id @map("id") @db.VarChar(21)
+  name     String    @db.TinyText
+  products Product[]
+
+  @@map("product_categories")
+}
+
+model User {
+  emailAddress      String @id @map("email_address") @db.VarChar(320)
+  displayingName    String @map("displaying_name") @db.TinyText
+  authorityRoleCode Int    @map("authority_role_code") @db.UnsignedTinyInt
+  hashedPassword    String @map("hashed_password") @db.Char(60)
+
+  @@map("users")
+}

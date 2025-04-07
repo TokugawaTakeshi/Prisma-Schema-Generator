@@ -1,28 +1,58 @@
 import type PrismaSchemaGenerator from "../../PrismaSchemaGenerator";
-import type { IntegerDataTypes } from "fundamental-constants";
-import { isNotUndefined } from "@yamato-daiwa/es-extensions";
+import { insertSubstringIf, isNotUndefined } from "@yamato-daiwa/es-extensions";
 
 
 export default abstract class IntegerColumnSchemaGenerator {
 
-  public abstract generate(integerColumnDefinition: PrismaSchemaGenerator.ColumnDefinition.Integer): string;
+  public abstract generate(integerPropertyDefinition: PrismaSchemaGenerator.PropertyDefinition.Integer): string;
 
 
-  protected abstract getNativeDatabaseTypeAttribute(integerType: IntegerDataTypes): string;
+  protected abstract getNativeDatabaseTypeAttribute(
+    integerPropertyDefinition: PrismaSchemaGenerator.PropertyDefinition.Integer
+  ): string;
 
-  protected abstract getFieldScalarType(integerType: IntegerDataTypes): string;
+  protected abstract getFieldScalarType(integerPropertyDefinition: PrismaSchemaGenerator.PropertyDefinition.Integer): string;
 
 
-  protected fromTemplate(integerColumnDefinition: PrismaSchemaGenerator.ColumnDefinition.Integer): string {
+  protected fromTemplate(
+    {
+      propertyName,
+      columnName = propertyName,
+      isNullable,
+      isPrimaryKey,
+      defaultValue,
+      ...integerPropertyDefinition
+    }: PrismaSchemaGenerator.PropertyDefinition.Integer
+  ): string {
     return [
-      integerColumnDefinition.name,
-      ` ${ this.getFieldScalarType(integerColumnDefinition.type) }`,
-      ...integerColumnDefinition.isNullable ? [ "?" ] : [],
-      ` ${ this.getNativeDatabaseTypeAttribute(integerColumnDefinition.type) }`,
-      ...integerColumnDefinition.isPrimaryKey === true ? [ " @id" ] : [],
-      ...isNotUndefined(integerColumnDefinition.defaultValue) ?
-          [ ` @default(${ integerColumnDefinition.defaultValue })` ] : []
-    ].join("");
+
+      propertyName,
+
+      this.getFieldScalarType({
+        propertyName,
+        columnName,
+        isNullable,
+        isPrimaryKey,
+        defaultValue,
+        ...integerPropertyDefinition
+      }) + insertSubstringIf("?", isNullable),
+
+      this.getNativeDatabaseTypeAttribute({
+        propertyName,
+        columnName,
+        isNullable,
+        isPrimaryKey,
+        defaultValue,
+        ...integerPropertyDefinition
+      }),
+
+      ...isPrimaryKey === true ? [ "@id" ] : [],
+
+      ...propertyName === columnName ? [] : [ `@map("${ columnName }")` ],
+
+      ...isNotUndefined(defaultValue) ? [ `@default(${ defaultValue })` ] : []
+
+    ].join(" ");
   }
 
 }
