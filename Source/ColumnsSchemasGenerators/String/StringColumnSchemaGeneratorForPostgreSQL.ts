@@ -30,7 +30,7 @@ export default class StringColumnSchemaGeneratorForPostgreSQL extends StringColu
             customMessage: "If target string is a primary key, either maximal or fixed characters count must be specified"
           }),
           title: InvalidExternalDataError.localization.defaultTitle,
-          occurrenceLocation: "StringColumnSchemaGeneratorForPostgreSQL.getNativeDatabaseTypeAttribute(stringColumnDefinition)",
+          occurrenceLocation: "StringColumnSchemaGeneratorForPostgreSQL.getNativeDatabaseTypeAttribute(stringColumnDefinition)"
         });
       }
 

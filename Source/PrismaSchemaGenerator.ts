@@ -8,6 +8,12 @@ import type StringColumnSchemaGenerator from "./ColumnsSchemasGenerators/String/
 import StringColumnSchemaGeneratorForMySQL from "./ColumnsSchemasGenerators/String/StringColumnSchemaGeneratorForMySQL";
 import StringColumnSchemaGeneratorForPostgreSQL from
     "./ColumnsSchemasGenerators/String/StringColumnSchemaGeneratorForPostgreSQL";
+import type DateWithoutTimeColumnSchemaGenerator from
+    "./ColumnsSchemasGenerators/DateWithoutTime/DateWithoutTimeColumnSchemaGenerator";
+import DateWithoutTimeColumnSchemaGeneratorForMySQL from
+    "./ColumnsSchemasGenerators/DateWithoutTime/DateWithoutTimeColumnSchemaGeneratorForMySQL";
+import DateWithoutTimeColumnSchemaGeneratorForPostgreSQL from
+    "./ColumnsSchemasGenerators/DateWithoutTime/DateWithoutTimeColumnSchemaGeneratorForPostgreSQL";
 import type DateAndTimeColumnSchemaGenerator from
     "./ColumnsSchemasGenerators/DateAndTime/DateAndTimeColumnSchemaGenerator";
 import DateAndTimeColumnSchemaGeneratorForMySQL from
@@ -24,7 +30,7 @@ import AnotherColumnSchemaGenerator from "./ColumnsSchemasGenerators/AnotherColu
 import { formatSchema as formatPrismaSchema } from "@prisma/sdk";
 
 /* ─── Utils ──────────────────────────────────────────────────────────────────────────────────────────────────────── */
-import type { IntegerDataTypes } from "fundamental-constants";
+import type { IntegerConstructor, IntegerDataTypes } from "fundamental-constants";
 import * as FileSystem from "fs/promises";
 import { isUndefined, Logger } from "@yamato-daiwa/es-extensions";
 
@@ -35,6 +41,7 @@ class PrismaSchemaGenerator {
 
   private readonly integerColumnSchemaGenerator: IntegerColumnSchemaGenerator;
   private readonly stringColumnSchemaGenerator: StringColumnSchemaGenerator;
+  private readonly dateWithoutTimeColumnSchemaGenerator: DateWithoutTimeColumnSchemaGenerator;
   private readonly dateAndTimeColumnSchemaGenerator: DateAndTimeColumnSchemaGenerator;
   private readonly listColumnSchemaGenerator: ListColumnSchemaGenerator;
 
@@ -43,18 +50,20 @@ class PrismaSchemaGenerator {
     {
       generatorProvider,
       databaseProvider,
+      databaseConnectionURI_EnvironmentVariableName,
       modelsDefinitions,
       outputFileAbsolutePath
     }: Readonly<{
       generatorProvider: string;
       databaseProvider: PrismaSchemaGenerator.SupportedDatabaseProviders;
+      databaseConnectionURI_EnvironmentVariableName: string;
       modelsDefinitions: ReadonlyArray<PrismaSchemaGenerator.ModelDefinition>;
       outputFileAbsolutePath: string;
     }>
   ): Promise<void> {
 
     const notFormattedSchema: string = new PrismaSchemaGenerator({ databaseProvider }).
-        generateNotFormattedSchema({ generatorProvider, modelsDefinitions });
+        generateNotFormattedSchema({ generatorProvider, modelsDefinitions, databaseConnectionURI_EnvironmentVariableName });
 
     const formattedSchema: string = await formatPrismaSchema({ schema: notFormattedSchema });
 
@@ -79,6 +88,7 @@ class PrismaSchemaGenerator {
       case PrismaSchemaGenerator.SupportedDatabaseProviders.MySQL: {
         this.integerColumnSchemaGenerator = new IntegerColumnSchemaGeneratorForMySQL();
         this.stringColumnSchemaGenerator = new StringColumnSchemaGeneratorForMySQL();
+        this.dateWithoutTimeColumnSchemaGenerator = new DateWithoutTimeColumnSchemaGeneratorForMySQL();
         this.dateAndTimeColumnSchemaGenerator = new DateAndTimeColumnSchemaGeneratorForMySQL();
         this.listColumnSchemaGenerator = new ListColumnSchemaGeneratorForMySQL();
         break;
@@ -87,6 +97,7 @@ class PrismaSchemaGenerator {
       case PrismaSchemaGenerator.SupportedDatabaseProviders.PostgreSQL: {
         this.integerColumnSchemaGenerator = new IntegerColumnSchemaGeneratorForPostgreSQL();
         this.stringColumnSchemaGenerator = new StringColumnSchemaGeneratorForPostgreSQL();
+        this.dateWithoutTimeColumnSchemaGenerator = new DateWithoutTimeColumnSchemaGeneratorForPostgreSQL();
         this.dateAndTimeColumnSchemaGenerator = new DateAndTimeColumnSchemaGeneratorForPostgreSQL();
         this.listColumnSchemaGenerator = new ListColumnSchemaGeneratorForPostgreSQL();
         break;
@@ -97,7 +108,7 @@ class PrismaSchemaGenerator {
           errorType: "NotSupportedYetError",
           description: `Provider "${ databaseProvider }" is not supported yet.`,
           title: "Database Provider Not Supported Yet",
-          occurrenceLocation: "PrismaSchemaGenerator.constructor(compoundParameter)",
+          occurrenceLocation: "PrismaSchemaGenerator.constructor(compoundParameter)"
         });
       }
 
@@ -109,9 +120,11 @@ class PrismaSchemaGenerator {
   private generateNotFormattedSchema(
     {
       generatorProvider,
+      databaseConnectionURI_EnvironmentVariableName,
       modelsDefinitions
     }: Readonly<{
       generatorProvider: string;
+      databaseConnectionURI_EnvironmentVariableName: string;
       modelsDefinitions: ReadonlyArray<PrismaSchemaGenerator.ModelDefinition>;
     }>
   ): string {
@@ -127,7 +140,7 @@ class PrismaSchemaGenerator {
 
       "datasource db {",
       `  provider = "${ this.databaseProvider }"`,
-      `  url      = env("DATABASE_URL")`,
+      `  url      = env("${ databaseConnectionURI_EnvironmentVariableName }")`,
       "}",
 
       ...modelsDefinitions.map(this.generateModelSchema.bind(this))
@@ -158,6 +171,11 @@ class PrismaSchemaGenerator {
     }
 
 
+    if (PrismaSchemaGenerator.isDateWithoutTimeColumnDefinition(columnDefinition)) {
+      return this.dateWithoutTimeColumnSchemaGenerator.generate(columnDefinition);
+    }
+
+
     if (PrismaSchemaGenerator.isDateAndTimeColumnDefinition(columnDefinition)) {
       return this.dateAndTimeColumnSchemaGenerator.generate(columnDefinition);
     }
@@ -181,6 +199,12 @@ class PrismaSchemaGenerator {
     columnDefinition: PrismaSchemaGenerator.ColumnDefinition
   ): columnDefinition is PrismaSchemaGenerator.ColumnDefinition.String {
     return typeof columnDefinition.type === "function" && columnDefinition.type.name === "String";
+  }
+
+  private static isDateWithoutTimeColumnDefinition(
+    columnDefinition: PrismaSchemaGenerator.ColumnDefinition
+  ): columnDefinition is PrismaSchemaGenerator.ColumnDefinition.DateWithoutTime {
+    return columnDefinition.type === PrismaSchemaGenerator.ColumnDefinition.DateWithoutTime.TYPE;
   }
 
   private static isDateAndTimeColumnDefinition(
@@ -224,40 +248,76 @@ namespace PrismaSchemaGenerator {
   export type ColumnDefinition =
       ColumnDefinition.String |
       ColumnDefinition.Integer |
+      ColumnDefinition.DateWithoutTime |
       ColumnDefinition.DateAndTime |
       ColumnDefinition.List |
       ColumnDefinition.AnotherModel;
 
   export namespace ColumnDefinition {
 
-    export type CommonPart = {
+    export type CommonPart = Readonly<{
       name: string;
       isNullable: boolean;
-    };
+    }>;
 
-    export type String = CommonPart & {
-      type: StringConstructor;
-      isPrimaryKey?: boolean;
-      defaultValue?: string;
-      maximalCharactersCount?: number;
-      fixedCharactersCount?: number;
-    };
+    export type String =
+        CommonPart &
+        Readonly<{
+          type: StringConstructor;
+          isPrimaryKey?: boolean;
+          isForeignKey?: boolean;
+          mustBeUnique?: boolean;
+          defaultValue?: string;
+          maximalCharactersCount?: number;
+          fixedCharactersCount?: number;
+        }>;
 
-    export type Integer = CommonPart & {
-      type: IntegerDataTypes;
-      isUnsigned: boolean;
-      isPrimaryKey?: boolean;
-      defaultValue?: number;
-      minimalValue?: number;
-      maximalValue?: number;
-    };
+    export const NEW_UNIVERSALLY_UNIQUE_IDENTIFIER: string = "uuid()";
 
+    export type Integer =
+        CommonPart &
+        Readonly<
+          {
+            isPrimaryKey?: boolean;
+            defaultValue?: number;
+          } &
+          (
+            (
+              {
+                type: IntegerConstructor;
+                maximalValue: number;
+              } &
+              (
+                { minimalValue: number; } |
+                { isUnsigned: true; }
+              )
+            ) |
+            {
+              type: IntegerDataTypes;
+              isUnsigned: boolean;
+            }
+          )
+        >;
 
-    export type DateAndTime = CommonPart & {
-      type: typeof DateAndTime.TYPE;
-      withTimezone: boolean;
-      precision: number;
-    };
+    export type DateWithoutTime =
+        CommonPart &
+        Readonly<{
+          type: typeof DateWithoutTime.TYPE;
+          isAutomaticallyUpdatedUpdateAtColumn?: boolean;
+        }>;
+
+    export namespace DateWithoutTime {
+      export const TYPE: "DATE_WITHOUT_TIME" = "DATE_WITHOUT_TIME";
+    }
+
+    export type DateAndTime =
+        CommonPart &
+        Readonly<{
+          type: typeof DateAndTime.TYPE;
+          withTimezone: boolean;
+          precision: number;
+          isAutomaticallyUpdatedUpdateAtColumn?: boolean;
+        }>;
 
     export namespace DateAndTime {
       export const TYPE: "DATE_TIME" = "DATE_TIME";
@@ -266,24 +326,26 @@ namespace PrismaSchemaGenerator {
 
     export type List =
         Omit<CommonPart, "isNullable"> &
-        {
+        Readonly<{
           type: typeof List.TYPE;
           elementType: string;
-        };
+        }>;
 
     export namespace List {
       export const TYPE: "LIST" = "LIST";
     }
 
 
-    export type AnotherModel = CommonPart & {
-      type: typeof AnotherModel.TYPE;
-      targetModelName: string;
-      relation: {
-        fields: ReadonlyArray<string>;
-        references: ReadonlyArray<string>;
-      };
-    };
+    export type AnotherModel =
+        CommonPart &
+        Readonly<{
+          type: typeof AnotherModel.TYPE;
+          targetModelName: string;
+          relation: {
+            fields: ReadonlyArray<string>;
+            references: ReadonlyArray<string>;
+          };
+        }>;
 
     export namespace AnotherModel {
       export const TYPE: "ANOTHER_MODEL" = "ANOTHER_MODEL";

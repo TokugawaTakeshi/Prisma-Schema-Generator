@@ -18,7 +18,10 @@ export default class StringColumnSchemaGeneratorForMySQL extends StringColumnSch
     stringColumnDefinition: PrismaSchemaGenerator.ColumnDefinition.String
   ): string {
 
-    if (stringColumnDefinition.isPrimaryKey === true) {
+    if (
+      stringColumnDefinition.isPrimaryKey === true ||
+      stringColumnDefinition.mustBeUnique === true
+    ) {
 
       const maximalCharactersCount: number | undefined =
           stringColumnDefinition.maximalCharactersCount ?? stringColumnDefinition.fixedCharactersCount;
@@ -30,7 +33,7 @@ export default class StringColumnSchemaGeneratorForMySQL extends StringColumnSch
             customMessage: "If target string is a primary key, either maximal or fixed characters count must be specified"
           }),
           title: InvalidExternalDataError.localization.defaultTitle,
-          occurrenceLocation: "StringColumnSchemaGeneratorForPostgreSQL.getNativeDatabaseTypeAttribute(stringColumnDefinition)",
+          occurrenceLocation: "StringColumnSchemaGeneratorForPostgreSQL.getNativeDatabaseTypeAttribute(stringColumnDefinition)"
         });
       }
 

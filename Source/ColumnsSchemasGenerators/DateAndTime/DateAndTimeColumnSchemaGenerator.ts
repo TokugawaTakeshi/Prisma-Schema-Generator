@@ -7,7 +7,7 @@ export default abstract class DateAndTimeColumnSchemaGenerator {
 
 
   protected abstract getNativeDatabaseTypeAttribute(
-    stringColumnDefinition: PrismaSchemaGenerator.ColumnDefinition.DateAndTime
+    dateTimeColumnDefinition: PrismaSchemaGenerator.ColumnDefinition.DateAndTime
   ): string;
 
 
@@ -16,7 +16,9 @@ export default abstract class DateAndTimeColumnSchemaGenerator {
       dateAndTimeColumnDefinition.name,
       " DateTime",
       ...dateAndTimeColumnDefinition.isNullable ? [ "?" ] : [],
-      ` ${ this.getNativeDatabaseTypeAttribute(dateAndTimeColumnDefinition) }`
+      ` ${ this.getNativeDatabaseTypeAttribute(dateAndTimeColumnDefinition) }`,
+      ...dateAndTimeColumnDefinition.isAutomaticallyUpdatedUpdateAtColumn === true ?
+          [ " @updatedAt" ] : []
     ].join("");
   }
 

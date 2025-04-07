@@ -18,6 +18,7 @@ export default abstract class StringColumnSchemaGenerator {
       " String",
       ...stringColumnDefinition.isNullable ? [ "?" ] : [],
       ...stringColumnDefinition.isPrimaryKey === true ? [ " @id" ] : [],
+      ...stringColumnDefinition.mustBeUnique === true ? [ " @unique" ] : [],
       ` ${ this.getNativeDatabaseTypeAttribute(stringColumnDefinition) }`,
       ...isNotUndefined(stringColumnDefinition.defaultValue) ? [ ` @default(${ stringColumnDefinition.defaultValue })` ] : []
     ].join("");

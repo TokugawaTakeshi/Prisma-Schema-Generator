@@ -1,5 +1,4 @@
 import type PrismaSchemaGenerator from "../../PrismaSchemaGenerator";
-import type { IntegerDataTypes } from "fundamental-constants";
 import { isNotUndefined } from "@yamato-daiwa/es-extensions";
 
 
@@ -12,13 +11,13 @@ export default abstract class IntegerColumnSchemaGenerator {
     integerColumnDefinition: PrismaSchemaGenerator.ColumnDefinition.Integer
   ): string;
 
-  protected abstract getFieldScalarType(integerType: IntegerDataTypes): string;
+  protected abstract getFieldScalarType(integerColumnDefinition: PrismaSchemaGenerator.ColumnDefinition.Integer): string;
 
 
   protected fromTemplate(integerColumnDefinition: PrismaSchemaGenerator.ColumnDefinition.Integer): string {
     return [
       integerColumnDefinition.name,
-      ` ${ this.getFieldScalarType(integerColumnDefinition.type) }`,
+      ` ${ this.getFieldScalarType(integerColumnDefinition) }`,
       ...integerColumnDefinition.isNullable ? [ "?" ] : [],
       ` ${ this.getNativeDatabaseTypeAttribute(integerColumnDefinition) }`,
       ...integerColumnDefinition.isPrimaryKey === true ? [ " @id" ] : [],
