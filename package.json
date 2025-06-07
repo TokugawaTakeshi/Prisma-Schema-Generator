@@ -1,8 +1,10 @@
 {
   "name": "@yamato-daiwa/prisma-schema-generator",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Intended to be used for generating of \"prisma.schema\" file based on business rules defined by TypeScript.",
   "keywords": [
+    "prisma",
+    "database",
     "clean-architecture"
   ],
   "author": {
@@ -17,19 +19,22 @@
   "files": [
     "Distributable"
   ],
-  "devDependencies": {
-    "@prisma/client": "6.7.0",
-    "@types/node": "22.15.17",
-    "@yamato-daiwa/style_guides": "0.6.8",
-    "ts-node": "10.9.2",
-    "typescript": "5.8.3"
+  "peerDependencies": {
+    "prisma": "^6.7.0"
   },
   "dependencies": {
     "@prisma/sdk": "4.0.0",
     "@yamato-daiwa/es-extensions": "1.8.0-alpha.13",
     "@yamato-daiwa/es-extensions-nodejs": "1.8.0-alpha.13",
-    "fundamental-constants": "0.8.0",
-    "prisma": "6.7.0"
+    "fundamental-constants": "0.8.0"
+  },
+  "devDependencies": {
+    "@prisma/client": "6.7.0",
+    "@types/node": "22.15.17",
+    "@yamato-daiwa/style_guides": "0.6.8",
+    "prisma": "6.7.0",
+    "ts-node": "10.9.2",
+    "typescript": "5.8.3"
   },
   "scripts": {
     "Lint": "eslint",

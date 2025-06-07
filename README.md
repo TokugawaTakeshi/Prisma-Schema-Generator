@@ -12,6 +12,12 @@ Designed for the projects obeys to **Clean Architecture** principles one of whic
 npm i prisma-schema-generator -D -E
 ```
 
+### Peer Dependencies
+
+| Package Name | Versions Range |
+|--------------|----------------|
+| **prisma**   | ~6.7.0         |
+
 
 ## Problem Overview
 
