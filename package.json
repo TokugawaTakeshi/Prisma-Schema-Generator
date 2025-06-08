@@ -1,6 +1,6 @@
 {
   "name": "@yamato-daiwa/prisma-schema-generator",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Intended to be used for generating of \"prisma.schema\" file based on business rules defined by TypeScript.",
   "keywords": [
     "prisma",
