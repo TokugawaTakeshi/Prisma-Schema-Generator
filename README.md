@@ -14,9 +14,9 @@ npm i prisma-schema-generator -D -E
 
 ### Peer Dependencies
 
-| Package Name | Versions Range |
-|--------------|----------------|
-| **prisma**   | ~6.7.0         |
+| Package Name | Versions Range  |
+|--------------|-----------------|
+| **prisma**   | >=6.9.0 <6.10.0 |
 
 
 ## Problem Overview
@@ -872,7 +872,7 @@ For the string-like columns, in addition to [common properties](#common-properti
       <dt>Type</dt>
       <dd>boolean</dd>
       <dt>Is Required</dt>
-      <dd>Not</dd>
+      <dd>No</dd>
       <dt>Description<dt>
       <dd>
         If specified, will be used as the value for 
@@ -894,7 +894,7 @@ For the string-like columns, in addition to [common properties](#common-properti
       <dt>Type</dt>
       <dd>number</dd>
       <dt>Is Required</dt>
-      <dd>Not</dd>
+      <dd>No</dd>
       <dt>Description<dt>
       <dd>
         If specified, will be used to select the best native data type such as <code>@db.TinyText</code> or
@@ -909,7 +909,7 @@ For the string-like columns, in addition to [common properties](#common-properti
       <dt>Type</dt>
       <dd>number</dd>
       <dt>Is Required</dt>
-      <dd>Not</dd>
+      <dd>No</dd>
       <dt>Description<dt>
       <dd>
         If specified, will be used to select the best native data type such as <code>@db.TinyText</code> or
