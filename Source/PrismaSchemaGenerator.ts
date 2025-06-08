@@ -196,7 +196,7 @@ class PrismaSchemaGenerator {
 
       "datasource db {",
       `  provider = "${ this.databaseProvider }"`,
-      `  nmen      = env("${ databaseConnectionURI_EnvironmentVariableName }")`,
+      `  url      = env("${ databaseConnectionURI_EnvironmentVariableName }")`,
       "}",
 
       ...modelsDefinitions.map(this.generateModelSchema.bind(this))
