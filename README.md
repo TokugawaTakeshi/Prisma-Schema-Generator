@@ -41,7 +41,7 @@ The database layer mentioned above is the _outermost_ layer of the **Clean Archi
   (**enterprise business rules**) are the _innermost_ layer:
 
 <figure>
-  <img src="./CleanArchitectureDiagram.png" alt="The Clean Architecture Diagram"/>
+  <img src="https://github.com/TokugawaTakeshi/Prisma-Schema-Generator/raw/master/CleanArchitectureDiagram.png" alt="The Clean Architecture Diagram"/>
   <figcaption style="text-align: center;">
     The Clean Architecture Diagram (<a href="https://medium.com/@rudrakshnanavaty/clean-architecture-7c1b3b4cb181" target="_blank" rel="noopener noreferrer nofollow">Image source</a>)
   </figcaption>
@@ -785,11 +785,11 @@ Each subtype of `PrismaSchemaGenerator.PropertyDefinition` discriminated union h
     </dl>    
   </dd>
 
-  <dt><code>columnName</code></dt>
+  <dt><code>isNullable</code></dt>
   <dd>
     <dl>
       <dt>Type</dt>
-      <dd>isNullable</dd>
+      <dd>boolean</dd>
       <dt>Is Required</dt>
       <dd>Yes</dd>
       <dt>Description<dt>
@@ -797,6 +797,126 @@ Each subtype of `PrismaSchemaGenerator.PropertyDefinition` discriminated union h
         If <code>true</code>, the type of target property will be marked with <code>?</code> in <strong>schema.prisma</strong>.  
       </dd>
     </dl>    
+  </dd>
+
+</dl>
+
+#### String Properties
+
+For the string-like columns, in addition to [common properties](#common-properties), the following one can be (must be for
+  required ones) specified.
+
+<dl>
+
+  <dt><code>type</code></dt>
+  <dd>
+    Must be specified with
+      <a 
+        href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String" 
+        target="_blank" 
+        rel="nofollow noopener noreferrer"
+      >
+        <code>String</code> object
+      </a>
+      to for string-like columns.
+    The best specific data type will be selected according the following properties and specific Database.    
+  </dd>
+
+  <dt><code>isPrimaryKey</code></dt>
+  <dd>
+    <dl>
+      <dt>Type</dt>
+      <dd>boolean</dd>
+      <dt>Default Value</dt>
+      <dd><code>false</code></dd>
+      <dt>Description<dt>
+      <dd>
+        If specified with <code>true</code>, the 
+          <a 
+            href="https://www.prisma.io/docs/orm/reference/prisma-schema-reference#id" 
+            target="_blank" 
+            rel="nofollow noopener noreferrer"
+          >
+            <code>@id</code> attribute
+          </a>
+          will be added.
+      </dd>
+    </dl>
+  </dd>
+
+  <dt><code>mustBeUnique</code></dt>
+  <dd>
+    <dl>
+      <dt>Type</dt>
+      <dd>boolean</dd>
+      <dt>Default Value</dt>
+      <dd><code>false</code></dd>
+      <dt>Description<dt>
+      <dd>
+        If specified with <code>true</code>, the 
+          <a 
+            href="https://www.prisma.io/docs/orm/reference/prisma-schema-reference#unique" 
+            target="_blank" 
+            rel="nofollow noopener noreferrer"
+          >
+            <code>@unique</code> attribute
+          </a>
+          will be added.
+      </dd>
+    </dl>
+  </dd>
+
+  <dt><code>mustBeUnique</code></dt>
+  <dd>
+    <dl>
+      <dt>Type</dt>
+      <dd>boolean</dd>
+      <dt>Is Required</dt>
+      <dd>Not</dd>
+      <dt>Description<dt>
+      <dd>
+        If specified, will be used as the value for 
+          <a 
+            href="https://www.prisma.io/docs/orm/reference/prisma-schema-reference#default" 
+            target="_blank" 
+            rel="nofollow noopener noreferrer"
+          >
+            <code>@default</code> attribute
+          </a>
+          will be added.
+      </dd>
+    </dl>
+  </dd>
+
+  <dt><code>maximalCharactersCount</code></dt>
+  <dd>
+    <dl>
+      <dt>Type</dt>
+      <dd>number</dd>
+      <dt>Is Required</dt>
+      <dd>Not</dd>
+      <dt>Description<dt>
+      <dd>
+        If specified, will be used to select the best native data type such as <code>@db.TinyText</code> or
+          <code>@db.MediumText</code> for MySQL.
+      </dd>
+    </dl>
+  </dd>
+
+  <dt><code>fixedCharactersCount</code></dt>
+  <dd>
+    <dl>
+      <dt>Type</dt>
+      <dd>number</dd>
+      <dt>Is Required</dt>
+      <dd>Not</dd>
+      <dt>Description<dt>
+      <dd>
+        If specified, will be used to select the best native data type such as <code>@db.TinyText</code> or
+          <code>@db.MediumText</code> for MySQL.
+        Must NOT be specified with <code>maximalCharactersCount</code>.
+      </dd>
+    </dl>
   </dd>
 
 </dl>
