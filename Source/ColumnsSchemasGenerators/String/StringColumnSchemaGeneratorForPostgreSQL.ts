@@ -24,7 +24,7 @@ export default class StringColumnSchemaGeneratorForPostgreSQL extends StringColu
           stringPropertyDefinition.maximalCharactersCount ?? stringPropertyDefinition.fixedCharactersCount;
 
       if (isUndefined(maximalCharactersCount)) {
-        Logger.throwErrorAndLog({
+        Logger.throwErrorWithFormattedMessage({
           errorInstance: new InvalidExternalDataError({
             mentionToExpectedData: `"${ stringPropertyDefinition.propertyName }" String Column Definition`,
             customMessage: "If target string is a primary key, either maximal or fixed characters count must be specified."

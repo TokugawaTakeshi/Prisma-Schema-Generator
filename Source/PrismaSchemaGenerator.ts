@@ -150,7 +150,7 @@ class PrismaSchemaGenerator {
       case PrismaSchemaGenerator.SupportedDatabaseProviders.MongoDB:
       {
 
-        Logger.throwErrorAndLog({
+        Logger.throwErrorWithFormattedMessage({
           errorInstance: new UnsupportedScenarioError(`Provider "${ databaseProvider }" is not supported yet.`),
           title: UnsupportedScenarioError.localization.defaultTitle,
           occurrenceLocation: "PrismaSchemaGenerator.constructor(compoundParameter)"

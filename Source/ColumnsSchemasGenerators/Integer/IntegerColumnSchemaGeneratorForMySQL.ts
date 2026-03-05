@@ -63,7 +63,7 @@ export default class IntegerColumnSchemaGeneratorForMySQL extends IntegerColumnS
     const minimalValue: number = "minimalValue" in integerPropertyDefinition ? integerPropertyDefinition.minimalValue : 0;
 
     if (!("maximalValue" in integerPropertyDefinition) || isUndefined(integerPropertyDefinition.maximalValue)) {
-      Logger.throwErrorAndLog({
+      Logger.throwErrorWithFormattedMessage({
         errorInstance: new InvalidExternalDataError({
           mentionToExpectedData: `"${ columName }" Integer Column Definition`,
           customMessage:

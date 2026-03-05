@@ -19,7 +19,7 @@ export default class DateAndTimeColumnSchemaGeneratorForPostgreSQL extends DateA
   ): string {
 
     if (!isNaturalNumberOrZero(precision)) {
-      Logger.throwErrorAndLog({
+      Logger.throwErrorWithFormattedMessage({
         errorInstance: new InvalidConfigError({
           mentionToConfig: "PrismaSchemaGenerator.PropertyDefinition.DateAndTime",
           messageSpecificPart:
@@ -36,7 +36,7 @@ export default class DateAndTimeColumnSchemaGeneratorForPostgreSQL extends DateA
       precision < DateAndTimeColumnSchemaGeneratorForPostgreSQL.MINIMAL_PRECISION ||
       precision > DateAndTimeColumnSchemaGeneratorForPostgreSQL.MAXIMAL_PRECISION
     ) {
-      Logger.throwErrorAndLog({
+      Logger.throwErrorWithFormattedMessage({
         errorInstance: new InvalidConfigError({
           mentionToConfig: "PrismaSchemaGenerator.PropertyDefinition.DateAndTime",
           messageSpecificPart: "The `precision` must be within 0 - 6 range in PostgreSQL case."
