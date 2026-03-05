@@ -1,6 +1,6 @@
 {
   "name": "@yamato-daiwa/prisma-schema-generator",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Intended to be used for generating of \"prisma.schema\" file based on business rules defined by TypeScript.",
   "keywords": [
     "prisma",
@@ -20,34 +20,40 @@
     "Distributable"
   ],
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "peerDependencies": {
-    "prisma": ">=6.9.0 <6.20.0"
+    "prisma": "^7.0.0"
   },
   "dependencies": {
-    "@prisma/sdk": "4.0.0",
-    "@yamato-daiwa/es-extensions": "1.8.5",
-    "@yamato-daiwa/es-extensions-nodejs": "1.8.5",
-    "fundamental-constants": "0.8.0"
+    "@prisma/sdk": "3.15.2",
+    "@yamato-daiwa/es-extensions": "1.9.3",
+    "@yamato-daiwa/es-extensions-nodejs": "1.9.3",
+    "fundamental-constants": "0.9.0"
   },
   "devDependencies": {
-    "@prisma/client": "6.19.2",
+    "@prisma/client": "7.10.0",
     "@types/node": "22.15.30",
-    "@yamato-daiwa/style_guides": "0.11.6",
-    "prisma": "6.19.2",
+    "@yamato-daiwa/style_guides": "0.14.7",
+    "prisma": "7.10.0",
     "ts-node": "10.9.2",
-    "typescript": "5.9.3"
+    "typescript": "6.0.3"
   },
   "scripts": {
     "Lint": "eslint",
     "Rebuild Distributable Without Preliminary Cleaning": "tsc -p tsconfig-cjs.json && tsc -p tsconfig-esm.json",
     "Rebuild Distributable": "rimraf Distributable && tsc -p tsconfig-cjs.json && tsc -p tsconfig-esm.json",
     "Rebuild Distributable and Realize Alpha": "npm run \"Rebuild Distributable\" && npm publish --tag alpha",
-    "Rebuild Distributable and Realize RC": "npm run \"Rebuild Distributable\" && npm publish --tag rc"
+    "Rebuild Distributable and Realize RC": "npm run \"Rebuild Distributable\" && npm publish --tag rc",
+    "Print Project Structure": "wsl tree -I \".git|.idea|node_modules|Distributable\" || tree -I \".git|.idea|node_modules|Distributable\""
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/TokugawaTakeshi/Prisma-Schema-Generator.git"
+  },
+  "allowScripts": {
+    "prisma@7.10.0": true,
+    "@prisma/engines@3.16.0-49.da41d2bb3406da22087b849f0e911199ba4fbf11": true,
+    "@prisma/engines@7.10.0": true
   }
 }

@@ -6,6 +6,12 @@ import IntegerColumnSchemaGeneratorForMySQL from
 import IntegerColumnSchemaGeneratorForPostgreSQL from
     "./ColumnsSchemasGenerators/Integer/IntegerColumnSchemaGeneratorForPostgreSQL";
 
+/* ┄┄┄ Float ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ */
+import type FloatColumnSchemaGenerator from "./ColumnsSchemasGenerators/Float/FloatColumnSchemaGenerator";
+import FloatColumnSchemaGeneratorForMySQL from "./ColumnsSchemasGenerators/Float/FloatColumnSchemaGeneratorForMySQL";
+import FloatColumnSchemaGeneratorForPostgreSQL from
+    "./ColumnsSchemasGenerators/Float/FloatColumnSchemaGeneratorForPostgreSQL";
+
 /* ┄┄┄ String ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ */
 import type StringColumnSchemaGenerator from "./ColumnsSchemasGenerators/String/StringColumnSchemaGenerator";
 import StringColumnSchemaGeneratorForMySQL from "./ColumnsSchemasGenerators/String/StringColumnSchemaGeneratorForMySQL";
@@ -46,23 +52,31 @@ import AnotherColumnSchemaGenerator from "./ColumnsSchemasGenerators/AnotherColu
 import { formatSchema as formatPrismaSchema } from "@prisma/sdk";
 
 /* ─── Utils ──────────────────────────────────────────────────────────────────────────────────────────────────────── */
-import type { IntegerConstructor, IntegerDataTypes } from "fundamental-constants";
+import { IntegerDataTypes, FloatingPointDataTypes } from "fundamental-constants";
+import type { IntegerConstructor, FloatConstructor } from "fundamental-constants";
 import {
+  getObjectPropertySafely, isElementOfEnumeration,
   isNonEmptyString,
-  isNotUndefined,
+  isNotUndefined, isString,
   Logger,
   type ParsedJSON,
   UnsupportedScenarioError
 } from "@yamato-daiwa/es-extensions";
-import { ImprovedFileSystem } from "@yamato-daiwa/es-extensions-nodejs";
+import { ConsoleApplicationLogger, ImprovedFileSystem } from "@yamato-daiwa/es-extensions-nodejs";
 
 
 class PrismaSchemaGenerator {
+
+  static {
+    Logger.setImplementation(ConsoleApplicationLogger);
+  }
+
 
   /* ━━━ Fields ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   private readonly databaseProvider: PrismaSchemaGenerator.SupportedDatabaseProviders;
 
   private readonly integerColumnSchemaGenerator: IntegerColumnSchemaGenerator;
+  private readonly floatColumnSchemaGenerator: FloatColumnSchemaGenerator;
   private readonly stringColumnSchemaGenerator: StringColumnSchemaGenerator;
   private readonly dateWithoutTimeColumnSchemaGenerator: DateWithoutTimeColumnSchemaGenerator;
   private readonly dateAndTimeColumnSchemaGenerator: DateAndTimeColumnSchemaGenerator;
@@ -71,42 +85,72 @@ class PrismaSchemaGenerator {
 
 
   /* ━━━ Public Methods ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-  public static async generate(
+  public static generate(
     {
       generatorProvider,
       clientOutputPathRelativeToSchemaFile,
       binaryTargets,
       databaseProvider,
-      databaseConnectionURI_EnvironmentVariableName,
       modelsDefinitions,
-      outputFileAbsolutePath
+      outputFileAbsolutePath,
+      onSucceededEventHandler,
+      onFailedEventHandler
     }: Readonly<{
       generatorProvider: string;
       clientOutputPathRelativeToSchemaFile?: string;
       binaryTargets?: ReadonlyArray<string>;
       databaseProvider: PrismaSchemaGenerator.SupportedDatabaseProviders;
-      databaseConnectionURI_EnvironmentVariableName: string;
       modelsDefinitions: ReadonlyArray<PrismaSchemaGenerator.ModelDefinition>;
       outputFileAbsolutePath: string;
+      onSucceededEventHandler?: () => void;
+      onFailedEventHandler?: (error: unknown) => void;
     }>
-  ): Promise<void> {
+  ): void {
 
     const notFormattedYetSchema: string = new PrismaSchemaGenerator({ databaseProvider }).
         generateNotFormattedYetSchema({
           generatorProvider,
           clientOutputPathRelativeToSchemaFile,
           binaryTargets,
-          modelsDefinitions,
-          databaseConnectionURI_EnvironmentVariableName
+          modelsDefinitions
         });
 
-    const formattedSchema: string = await formatPrismaSchema({ schema: notFormattedYetSchema });
+    formatPrismaSchema({ schema: notFormattedYetSchema }).
 
-    return ImprovedFileSystem.writeFileToPossiblyNotExistingDirectory({
-      filePath: `${ outputFileAbsolutePath }/schema.prisma`,
-      content: formattedSchema,
-      synchronously: false
-    });
+        then(
+          (formattedSchema: string): void => {
+
+            ImprovedFileSystem.writeFileToPossiblyNotExistingDirectory({
+              filePath: `${ outputFileAbsolutePath }/schema.prisma`,
+              content: formattedSchema,
+              synchronously: true
+            });
+
+            Logger.logSuccess({
+              title: "Prisma Schema Generating Succeeded",
+              description: `The Prisma schema has been generated to: ${ outputFileAbsolutePath }`
+            });
+
+            onSucceededEventHandler?.();
+
+          }
+        ).
+
+        catch(
+          (error: unknown): void => {
+
+            Logger.logError({
+              errorType: "PrismaSchemaGeneratingFailedError",
+              title: "Prisma Schema Generating Failed",
+              description: "The error has occurred during the generating of the Prisma schema.",
+              occurrenceLocation: "PrismaSchemaGenerator.generate(options)",
+              caughtError: error
+            });
+
+            onFailedEventHandler?.(error);
+
+          }
+        );
 
   }
 
@@ -126,6 +170,7 @@ class PrismaSchemaGenerator {
 
       case PrismaSchemaGenerator.SupportedDatabaseProviders.MySQL: {
         this.integerColumnSchemaGenerator = new IntegerColumnSchemaGeneratorForMySQL();
+        this.floatColumnSchemaGenerator = new FloatColumnSchemaGeneratorForMySQL();
         this.stringColumnSchemaGenerator = new StringColumnSchemaGeneratorForMySQL();
         this.dateWithoutTimeColumnSchemaGenerator = new DateWithoutTimeColumnSchemaGeneratorForMySQL();
         this.dateAndTimeColumnSchemaGenerator = new DateAndTimeColumnSchemaGeneratorForMySQL();
@@ -136,6 +181,7 @@ class PrismaSchemaGenerator {
 
       case PrismaSchemaGenerator.SupportedDatabaseProviders.PostgreSQL: {
         this.integerColumnSchemaGenerator = new IntegerColumnSchemaGeneratorForPostgreSQL();
+        this.floatColumnSchemaGenerator = new FloatColumnSchemaGeneratorForPostgreSQL();
         this.stringColumnSchemaGenerator = new StringColumnSchemaGeneratorForPostgreSQL();
         this.dateWithoutTimeColumnSchemaGenerator = new DateWithoutTimeColumnSchemaGeneratorForPostgreSQL();
         this.dateAndTimeColumnSchemaGenerator = new DateAndTimeColumnSchemaGeneratorForPostgreSQL();
@@ -169,13 +215,11 @@ class PrismaSchemaGenerator {
       generatorProvider,
       clientOutputPathRelativeToSchemaFile,
       binaryTargets = [],
-      databaseConnectionURI_EnvironmentVariableName,
       modelsDefinitions
     }: Readonly<{
       generatorProvider: string;
       clientOutputPathRelativeToSchemaFile?: string;
       binaryTargets?: ReadonlyArray<string>;
-      databaseConnectionURI_EnvironmentVariableName: string;
       modelsDefinitions: ReadonlyArray<PrismaSchemaGenerator.ModelDefinition>;
     }>
   ): string {
@@ -196,7 +240,6 @@ class PrismaSchemaGenerator {
 
       "datasource db {",
       `  provider = "${ this.databaseProvider }"`,
-      `  url      = env("${ databaseConnectionURI_EnvironmentVariableName }")`,
       "}",
 
       ...modelsDefinitions.map(this.generateModelSchema.bind(this))
@@ -209,12 +252,27 @@ class PrismaSchemaGenerator {
     {
       modelName,
       tableName,
-      propertiesDefinitions
+      propertiesDefinitions,
+      compositeID,
+      compoundUniqueConstraint = []
     }: PrismaSchemaGenerator.ModelDefinition
   ): string {
     return [
       `model ${ modelName } {`,
       ...propertiesDefinitions.map(this.generateColumnSchema.bind(this)),
+      ...isNotUndefined(compositeID) && compositeID.fields.length > 0 ?
+          [
+            [
+              "@@id(",
+              [
+                `fields: [${ compositeID.fields.join(", ") }]`,
+                ...isNotUndefined(compositeID.parameterName) ? [ `name: "${ compositeID.parameterName }"` ] : []
+              ].join(", "),
+              ")"
+            ].join("")
+          ] :
+          [],
+      ...compoundUniqueConstraint.length > 0 ? [ `@@unique([${ compoundUniqueConstraint.join(", ") }])` ] : [],
       ...isNotUndefined(tableName) ? [ `@@map("${ tableName }")` ] : [],
       "}"
     ].join("\n");
@@ -224,6 +282,16 @@ class PrismaSchemaGenerator {
 
     if (PrismaSchemaGenerator.isStringPropertyDefinition(propertyDefinition)) {
       return this.stringColumnSchemaGenerator.generate(propertyDefinition);
+    }
+
+
+    if (PrismaSchemaGenerator.isIntegerPropertyDefinition(propertyDefinition)) {
+      return this.integerColumnSchemaGenerator.generate(propertyDefinition);
+    }
+
+
+    if (PrismaSchemaGenerator.isFloatPropertyDefinition(propertyDefinition)) {
+      return this.floatColumnSchemaGenerator.generate(propertyDefinition);
     }
 
 
@@ -251,7 +319,13 @@ class PrismaSchemaGenerator {
     }
 
 
-    return this.integerColumnSchemaGenerator.generate(propertyDefinition);
+    Logger.throwErrorWithFormattedMessage({
+      errorInstance: new UnsupportedScenarioError(
+        `The property "${ String(getObjectPropertySafely(propertyDefinition, "propertyName")) }" has unsupported type.`
+      ),
+      title: UnsupportedScenarioError.localization.defaultTitle,
+      occurrenceLocation: "PrismaSchemaGenerator.generateColumnSchema(propertyDefinition)"
+    });
 
   }
 
@@ -259,6 +333,20 @@ class PrismaSchemaGenerator {
     propertyDefinition: PrismaSchemaGenerator.PropertyDefinition
   ): propertyDefinition is PrismaSchemaGenerator.PropertyDefinition.String {
     return typeof propertyDefinition.type === "function" && propertyDefinition.type.name === "String";
+  }
+
+  private static isIntegerPropertyDefinition(
+    propertyDefinition: PrismaSchemaGenerator.PropertyDefinition
+  ): propertyDefinition is PrismaSchemaGenerator.PropertyDefinition.Integer {
+    return (typeof propertyDefinition.type === "function" && propertyDefinition.type.name === "Integer") ||
+        (isString(propertyDefinition.type) && isElementOfEnumeration(propertyDefinition.type, IntegerDataTypes));
+  }
+
+  private static isFloatPropertyDefinition(
+    propertyDefinition: PrismaSchemaGenerator.PropertyDefinition
+  ): propertyDefinition is PrismaSchemaGenerator.PropertyDefinition.Float {
+    return (typeof propertyDefinition.type === "function" && propertyDefinition.type.name === "Float") ||
+        (isString(propertyDefinition.type) && isElementOfEnumeration(propertyDefinition.type, FloatingPointDataTypes));
   }
 
   private static isDateWithoutTimePropertyDefinition(
@@ -309,11 +397,29 @@ namespace PrismaSchemaGenerator {
     modelName: string;
     tableName?: string;
     propertiesDefinitions: ReadonlyArray<PropertyDefinition>;
+    compositeID?: CompositeID;
+    compoundUniqueConstraint?: ReadonlyArray<string>;
   }>;
 
+  export type CompositeID = Readonly<{
+    parameterName?: string;
+    fields: ReadonlyArray<string>;
+  }>;
+
+  export enum ReferentialActions {
+    cascade = "Cascade",
+    restrict = "Restrict",
+    noAction = "NoAction",
+    setNull = "SetNull",
+    setDefault = "SetDefault"
+  }
+
+
+  /* ━━━ Property Definition ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   export type PropertyDefinition =
       PropertyDefinition.String |
       PropertyDefinition.Integer |
+      PropertyDefinition.Float |
       PropertyDefinition.DateWithoutTime |
       PropertyDefinition.DateAndTime |
       PropertyDefinition.List |
@@ -329,7 +435,7 @@ namespace PrismaSchemaGenerator {
     }>;
 
 
-    /* ─── String ─────────────────────────────────────────────────────────────────────────────────────────────────── */
+    /* ┅┅┅ String ┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅ */
     export type String =
         CommonPart &
         Readonly<{
@@ -346,7 +452,7 @@ namespace PrismaSchemaGenerator {
     export const NEW_NANO_ID: string = "nanoid()";
 
 
-    /* ─── Integer ────────────────────────────────────────────────────────────────────────────────────────────────── */
+    /* ┅┅┅ Integer ┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅ */
     export type Integer =
         CommonPart &
         Readonly<
@@ -367,6 +473,33 @@ namespace PrismaSchemaGenerator {
             ) |
             {
               type: IntegerDataTypes;
+              isUnsigned: boolean;
+            }
+          )
+        >;
+
+
+    /* ┅┅┅ Float ┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅ */
+    export type Float =
+        CommonPart &
+        Readonly<
+          {
+            isPrimaryKey?: boolean;
+            defaultValue?: number;
+          } &
+          (
+            (
+              {
+                type: FloatConstructor;
+                maximalValue: number;
+              } &
+              (
+                { minimalValue: number; } |
+                { isUnsigned: true; }
+              )
+            ) |
+            {
+              type: FloatingPointDataTypes;
               isUnsigned: boolean;
             }
           )
@@ -438,8 +571,10 @@ namespace PrismaSchemaGenerator {
           type: typeof AnotherModel.TYPE;
           targetModelName: string;
           relation: {
-            fields: ReadonlyArray<string>;
-            references: ReadonlyArray<string>;
+            ownFields: ReadonlyArray<string>;
+            fieldsOnOtherSideOfRelation: ReadonlyArray<string>;
+            onUpdate: ReferentialActions;
+            onDelete: ReferentialActions;
           };
         }>;
 
