@@ -2,7 +2,7 @@ import type PrismaSchemaGenerator from "../PrismaSchemaGenerator";
 import { insertSubstringIf } from "@yamato-daiwa/es-extensions";
 
 
-export default abstract class AnotherColumnSchemaGenerator {
+export default abstract class AnotherModelSchemaGenerator {
 
   public static generate(
     {

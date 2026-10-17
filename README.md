@@ -9,14 +9,28 @@ Designed for the projects obeys to **Clean Architecture** principles one of whic
 ## Installation
 
 ```Bash
-npm i prisma-schema-generator -D -E
+npm i @yamato-daiwa/prisma-schema-generator -D -E
 ```
 
-### Peer Dependencies
+> [!NOTE]
+> Initially, there was not intentions to scope this package to "@yamato-daiwa", but there is already 
+>   [another package](https://www.npmjs.com/package/prisma-schema-generator) with "prisma-schema-generator" name
+>   specializing on joining multiple prisma files into one.
 
-| Package Name | Versions Range  |
-|--------------|-----------------|
-| **prisma**   | >=6.9.0 <6.10.0 |
+
+### Requirements
+
+For the `@yamato-daiwa/prisma-schema-generator` of version **0.5.0** or any patch version of it:
+
+<dl>
+
+  <dt>Supported Minimal Node.js Version</dt>
+  <dd>22.0.0</dd>
+
+  <dt>Supported Prisma Versions Range</dt>
+  <dd> >=7.0.0 <=8.0.0</dd>
+
+</dl>
 
 
 ## Problem Overview
@@ -28,7 +42,7 @@ Although it has not been declared directly, de facto using just the **Prisma** y
   [model the data on application level](https://www.prisma.io/docs/orm/overview/introduction/data-modeling#data-modeling-on-the-application-level)
   what it rarely practiced because it is the dual management impacting the application maintainability.
 
-The defining of the business rules in **prisma.schema** is the gross violation of **Clean Architecture**.
+However, the defining of business rules in **prisma.schema** is the gross violation of **Clean Architecture**.
 
 > Where should such ORM systems reside? 
 > In the database layer of course.
@@ -47,6 +61,7 @@ The database layer mentioned above is the _outermost_ layer of the **Clean Archi
   </figcaption>
 </figure> 
 
+
 According to the **Clean Architecture**, each outer ring _must_ respect the inner ones while the inner ones must know 
   _nothing_ about the outer ones:
 
@@ -62,7 +77,7 @@ According to the **Clean Architecture**, each outer ring _must_ respect the inne
 
 ## Solution
 
-In general terms, the **prisma-schema-generator** has been designed as a part of the following approach.
+In general terms, the **@yamato-daiwa/prisma-schema-generator** has been designed as a part of the following approach.
 
 1. Define the business rules completely independently on any framework.
 2. For each entity create the mapper object according to which the Prisma model will be generated.
@@ -73,7 +88,7 @@ In general terms, the **prisma-schema-generator** has been designed as a part of
 ### Step 1: Define the Business Rules
 
 There is no standards how to define the business rules.
-The author of **prisma-schema-generator** doing is as shown below.
+The author of **@yamato-daiwa/prisma-schema-generator** doing it as shown below.
 To make the example enough, three entities has been provided.
 
 #### Sample Entity 1
@@ -416,12 +431,6 @@ import { Logger, FileWritingFailedError } from "@yamato-daiwa/es-extensions";
 import { ConsoleApplicationLogger } from "@yamato-daiwa/es-extensions-nodejs";
 
 
-// TODO Correct the otuput directory path
-const OUTPUT_DIRECTORY_ABSOLUTE_PATH: string = Path.join(
-  process.cwd(), "Tests", "Manual", "Minimal", "_Generated"
-);
-
-
 Logger.setImplementation(ConsoleApplicationLogger);
 
 
@@ -433,42 +442,24 @@ PrismaSchemaGenerator.generate({
   databaseConnectionURI_EnvironmentVariableName: "mysql://root:example@localhost:3306/PrismaSchemaGenerator-MinimalExample",
 
   databaseProvider: PrismaSchemaGenerator.SupportedDatabaseProviders.MySQL,
-  outputFileAbsolutePath: OUTPUT_DIRECTORY_ABSOLUTE_PATH,
+  
+  // TODO Correct the otuput directory path
+  outputDirectoryAbsolutePath: Path.join(process.cwd(), "Tests", "Manual", "Minimal", "_Generated"),
+  
   modelsDefinitions: [
     productPrismaModelDefinition,
     productCategoryPrismaModelDefinition,
     userPrismaModelDefinition
   ]
 
-}).
-
-  then(
-    (): void => {
-      Logger.logSuccess({
-        title: "schema.prisma has been generated",
-        description: `${ OUTPUT_DIRECTORY_ABSOLUTE_PATH }${ Path.sep }schema.prisma`
-      });
-    }
-  ).
-
-  catch(
-    (error: unknown): void => {
-      Logger.logError({
-        errorType: FileWritingFailedError.NAME,
-        title: FileWritingFailedError.localization.defaultTitle,
-        description: "prisma.schema",
-        occurrenceLocation: "PrismaSchemaGenerator.generate",
-        caughtError: error
-      });
-    }
-  );
+});
 ```
 
 Now you can run this script to generate the **schema.prisma**.
 For **ts-node** case, it will be something like (you need to correct the path to script):
 
 ```
-ts-node generatePrismaSchema.ts
+tsx generatePrismaSchema.ts
 ```
 
 As result, the following schema.prisma will be generated:
@@ -480,14 +471,13 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = env("mysql://root:example@localhost:3306/PrismaSchemaGenerator-MinimalExample")
 }
 
 model Product {
   ID                         String           @id @map("id") @db.VarChar(21)
   title                      String           @db.TinyText
   description                String           @db.Text
-  category                   ProductCategory? @relation(fields: [categoryID], references: [ID])
+  category                   ProductCategory? @relation(fields: [categoryID], references: [ID], onUpdate: Cascade, onDelete: Restrict)
   categoryID                 String?          @db.Char(21)
   price__dollars__withoutTax BigInt           @map("price__dollars__includingTax") @db.UnsignedBigInt
   quantityRemainInStock      BigInt?          @map("quantity_remain_in_stock") @db.UnsignedBigInt
@@ -513,8 +503,8 @@ model User {
 }
 ```
 
-The **prisma-schema-generator**'s turn ends here.
-You will need to update and rerun this script when make some changes in business rules and/r prisma model definitions.
+The ****@yamato-daiwa/prisma-schema-generator****'s turn ends here.
+You will need to update and rerun above script when make some changes in business rules and/or prisma model definitions.
 
 Also, you may want to generate the `schema.prisma` and prisma client at once.
 If so, add to your `package.json` the script similar to following one (correct the paths before launch): 
@@ -522,10 +512,12 @@ If so, add to your `package.json` the script similar to following one (correct t
 ```json
 {
   "scripts": {
-    "Prisma Schema And Client Generating": "ts-node generatePrismaSchema.ts && prisma generate --schema _Generated/schema.prisma"
+    "Prisma Schema And Client Generating": "tsx generatePrismaSchema.ts && prisma generate --schema _Generated/schema.prisma"
   }
 }
 ```
+
+Above command does not need the established connection with the database.
 
 
 ## API
@@ -538,16 +530,19 @@ Has only one public member, the static `generate` method.
 
 ```
 (
-  options: Readonly<{
-    generatorProvider: string;
-    clientOutputPathRelativeToSchemaFile?: string;
-    binaryTargets?: ReadonlyArray<string>;
-    databaseProvider: PrismaSchemaGenerator.SupportedDatabaseProviders;
-    databaseConnectionURI_EnvironmentVariableName: string;
-    modelsDefinitions: ReadonlyArray<PrismaSchemaGenerator.ModelDefinition>;
-    outputFileAbsolutePath: string;
-  }>
-): Promise<void>
+  options: 
+      {
+        generatorProvider: string;
+        clientOutputPathRelativeToSchemaFile?: string;
+        targetOperatingSystems?: ReadonlyArray<string>;
+        datasourceProvider: PrismaSchemaGenerator.SupportedDatabaseProviders;
+        modelsDefinitions: ReadonlyArray<PrismaSchemaGenerator.ModelDefinition>;
+        outputDirectoryAbsolutePath: string;
+        outputFileName?: string;
+        onSucceededEventHandler?: () => void;
+        onFailedEventHandler?: (error: unknown) => void;
+      }
+) => Promise<void>
 ```
 
 Generates the **prisma.schema** file according the specified options.
@@ -603,13 +598,12 @@ Generates the **prisma.schema** file according the specified options.
           >
             <code>generator.client.output</code>
           </a>.
-        For <strong>Prisma 6.X</strong> is optional, but will become required for <strong>Prisma 7.X.</strong>.
-        If omitted, the prisma client files will be generated below <strong>node_modules</strong>.
+        As default, the client will be generated to <code>node_modules/.prisma/client</code>.
       </dd>
     </dl>
   </dd>
 
-  <dt><code>binaryTargets</code></dt>
+  <dt><code>targetOperatingSystems</code></dt>
   <dd>
     <dl>
       <dt>Type</dt>
@@ -626,13 +620,11 @@ Generates the **prisma.schema** file according the specified options.
           >
             <code>generator.client.binaryTargets</code>
           </a>.
-        For <strong>Prisma 6.X</strong> is optional, but will become required for <strong>Prisma 7.X.</strong>.
-        If omitted, the prisma client files will be generated below <strong>node_modules</strong>.
       </dd>
     </dl>
   </dd>
 
-  <dt><code>databaseProvider</code></dt>
+  <dt><code>datasourceProvider</code></dt>
   <dd>
     <dl>
       <dt>Type</dt>
@@ -642,12 +634,12 @@ Generates the **prisma.schema** file according the specified options.
       <dt>Allowed Values</dt>
       <dd>
         <ul>
-          <li><code>SupportedDatabaseProviders.PostgreSQL</code></li>
-          <li><code>SupportedDatabaseProviders.MySQL</code></li>
-          <li><code>SupportedDatabaseProviders.SQLite</code></li>
-          <li><code>SupportedDatabaseProviders.SQL_Server</code></li>
-          <li><code>SupportedDatabaseProviders.MongoDB</code></li>
-          <li><code>SupportedDatabaseProviders.CockroachDB</code></li>
+          <li><code>PrismaSchemaGenerator.SupportedDatasourceProviders.PostgreSQL</code></li>
+          <li><code>PrismaSchemaGenerator.SupportedDatasourceProviders.MySQL</code></li>
+          <li><code>PrismaSchemaGenerator.SupportedDatasourceProviders.SQLite</code></li>
+          <li><code>PrismaSchemaGenerator.SupportedDatasourceProviders.SQL_Server</code></li>
+          <li><code>PrismaSchemaGenerator.SupportedDatasourceProviders.MongoDB</code></li>
+          <li><code>PrismaSchemaGenerator.SupportedDatasourceProviders.CockroachDB</code></li>
         </ul>
       </dd>
       <dt>Description</dt>
@@ -660,30 +652,7 @@ Generates the **prisma.schema** file according the specified options.
           >
             <code>datasource.provider</code>
           </a>.
-        Must be the element of <code>PrismaSchemaGenerator.ModelDefinition</code> enumeration.
-      </dd>
-    </dl>
-  </dd>
-
-  <dt><code>databaseConnectionURI_EnvironmentVariableName</code></dt>
-  <dd>
-    <dl>
-      <dt>Type</dt>
-      <dd>string</dd>
-      <dt>Is Required</dt>
-      <dd>Yes</dd>
-      <dt>Description</dt>
-      <dd>
-        The name of environment variable storing the database connection URI. 
-        Will be interpolated inside `env("")` of
-          <a 
-            href="https://www.prisma.io/docs/orm/reference/prisma-schema-reference#datasource" 
-            target="_blank" 
-            rel="nofollow noopener noreferrer"
-          >
-            <code>datasource.url</code>
-          </a> 
-          value.
+        Must be the element of <code>PrismaSchemaGenerator.SupportedDatasourceProviders</code> enumeration.
       </dd>
     </dl>
   </dd>
@@ -701,6 +670,8 @@ Generates the **prisma.schema** file according the specified options.
     modelName?: string;
     tableName?: string;
     propertiesDefinitions: ReadonlyArray&lt;PropertyDefinition&gt;;
+    compositeID?: &lt;CompositeID&gt;;
+    compoundUniqueConstraint?: ReadonlyArray&lt;string&gt;;
   }
       </code></pre></dd>
       <dt>Description</dt>
@@ -710,8 +681,8 @@ Generates the **prisma.schema** file according the specified options.
       </dd>
     </dl>
   </dd>
-
-  <dt><code>outputFileAbsolutePath</code></dt>
+  
+  <dt><code>outputDirectoryAbsolutePath</code></dt>
   <dd>
     <dl>
       <dt>Type</dt>
@@ -719,9 +690,61 @@ Generates the **prisma.schema** file according the specified options.
       <dt>Is Required</dt>
       <dd>Yes</dd>
       <dt>Description</dt>
+      <dd>The path specifying the directory where to output the file.</dd>
+    </dl>
+  </dd>
+
+  <dt><code>outputFileName</code></dt>
+  <dd>
+    <dl>
+      <dt>Type</dt>
+      <dd>String</dd>
+      <dt>Default Value</dt>
+      <dd><code>"schema.prisma"</code></dd>
+      <dt>Description</dt>
+      <dd>The output file name of Prisma schema.</dd>
+    </dl>
+  </dd>
+
+  <dt><code>onSucceededEventHandler</code></dt>
+  <dd>
+    <dl>
+      <dt>Type</dt>
+      <dd>Functions</dd>
+      <dt>Parameters</dt>
+      <dd>No</dd>
+      <dt>Return Value</dt>
+      <dd>No (void)</dd>
+      <dt>Is Required</dt>
+      <dd>No</dd>
+      <dt>Description</dt>
+      <dd>The callback will be invoked if Prisma schema has been successfully generated and formatted.</dd>
+    </dl>
+  </dd>
+
+  <dt><code>onFailedEventHandler</code></dt>
+  <dd>
+    <dl>
+      <dt>Type</dt>
+      <dd>Functions</dd>
+      <dt>Parameters</dt>
       <dd>
-        The path specifying where to output the file.
+        <dl>
+          <dt><code>error</code></dt>
+          <dd>
+            <dl>
+              <dt>Type</dt>
+              <dd>unknown</dd>  
+            </dl>
+          </dd>
+        </dl>
       </dd>
+      <dt>Return Value</dt>
+      <dd>No (void)</dd>
+      <dt>Is Required</dt>
+      <dd>No</dd>
+      <dt>Description</dt>
+      <dd>The callback will be invoked when some error occurred during the generating of prisma schema.</dd>
     </dl>
   </dd>
 
@@ -801,10 +824,11 @@ Each subtype of `PrismaSchemaGenerator.PropertyDefinition` discriminated union h
 
 </dl>
 
+
 #### String Properties
 
-For the string-like columns, in addition to [common properties](#common-properties), the following one can be (must be for
-  required ones) specified.
+For the string-like columns, in addition to [common properties](#common-properties), the following ones can be (must be
+for required ones) specified.
 
 <dl>
 
@@ -819,7 +843,7 @@ For the string-like columns, in addition to [common properties](#common-properti
         <code>String</code> object
       </a>
       to for string-like columns.
-    The best specific data type will be selected according the following properties and specific Database.    
+    The best specific data type will be desiced according the following properties and specific Database.    
   </dd>
 
   <dt><code>isPrimaryKey</code></dt>
@@ -866,7 +890,7 @@ For the string-like columns, in addition to [common properties](#common-properti
     </dl>
   </dd>
 
-  <dt><code>mustBeUnique</code></dt>
+  <dt><code>defaultValue</code></dt>
   <dd>
     <dl>
       <dt>Type</dt>
