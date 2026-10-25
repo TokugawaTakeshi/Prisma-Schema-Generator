@@ -5,7 +5,7 @@ import User from "../BusinessRules/User";
 import { IntegerDataTypes } from "fundamental-constants";
 
 /* ─── Framework ──────────────────────────────────────────────────────────────────────────────────────────────────── */
-import type { PrismaSchemaGenerator } from "../../../../Source";
+import type PrismaSchemaGenerator from "../../../../Source";
 
 
 const userPrismaModelDefinition: PrismaSchemaGenerator.ModelDefinition = {

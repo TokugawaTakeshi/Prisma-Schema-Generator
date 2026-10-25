@@ -31,7 +31,7 @@ export default class IntegerColumnSchemaGeneratorForPostgreSQL extends IntegerCo
   protected override getNativeDatabaseTypeAttribute(
     {
       type,
-      propertyName: columName,
+      propertyName: columnName,
       ...integerPropertyDefinition
     }: PrismaSchemaGenerator.PropertyDefinition.Integer
   ): string {
@@ -66,7 +66,7 @@ export default class IntegerColumnSchemaGeneratorForPostgreSQL extends IntegerCo
     if (!("maximalValue" in integerPropertyDefinition) || isUndefined(integerPropertyDefinition.maximalValue)) {
       Logger.throwErrorWithFormattedMessage({
         errorInstance: new InvalidExternalDataError({
-          mentionToExpectedData: `"${ columName }" Integer Column Definition`,
+          mentionToExpectedData: `"${ columnName }" Integer Column Definition`,
           customMessage:
               "If column type has been specified as `Integer`, the `maximalValue` must be specified at once to make " +
                 "possible the computing of the correct native type."

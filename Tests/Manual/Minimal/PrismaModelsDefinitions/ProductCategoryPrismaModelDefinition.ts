@@ -3,7 +3,7 @@ import ProductCategory from "../BusinessRules/ProductCategory";
 import Product from "../BusinessRules/Product";
 
 /* ─── Framework ──────────────────────────────────────────────────────────────────────────────────────────────────── */
-import { PrismaSchemaGenerator } from "../../../../Source";
+import PrismaSchemaGenerator from "../../../../Source";
 
 
 const productCategoryPrismaModelDefinition: PrismaSchemaGenerator.ModelDefinition = {

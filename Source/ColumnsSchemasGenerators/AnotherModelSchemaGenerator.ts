@@ -2,7 +2,7 @@ import type PrismaSchemaGenerator from "../PrismaSchemaGenerator";
 import { insertSubstringIf } from "@yamato-daiwa/es-extensions";
 
 
-export default abstract class AnotherColumnSchemaGenerator {
+export default abstract class AnotherModelSchemaGenerator {
 
   public static generate(
     {
@@ -17,7 +17,16 @@ export default abstract class AnotherColumnSchemaGenerator {
 
       `${ propertyName } ${ targetModelName } ${ insertSubstringIf("?", isNullable) }`,
 
-      `@relation(fields: [${ relation.fields.join(",") }], references: [${ relation.references.join(",") }])`,
+      [
+        "@relation(",
+        [
+          `fields: [${ relation.ownFields.join(",") }]`,
+          `references: [${ relation.fieldsOnOtherSideOfRelation.join(",") }]`,
+          `onUpdate: ${ relation.onUpdate }`,
+          `onDelete: ${ relation.onDelete }`
+        ].join(", "),
+        ")"
+      ].join(""),
 
       ...propertyName === columnName ? [] : [ `@map("${ columnName }")` ]
 

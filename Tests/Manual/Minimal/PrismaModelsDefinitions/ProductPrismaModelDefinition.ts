@@ -3,7 +3,7 @@ import Product from "../BusinessRules/Product";
 import ProductCategory from "../BusinessRules/ProductCategory";
 
 /* ─── Framework ──────────────────────────────────────────────────────────────────────────────────────────────────── */
-import { PrismaSchemaGenerator } from "../../../../Source";
+import PrismaSchemaGenerator from "../../../../Source";
 import { Integer } from "fundamental-constants";
 
 
@@ -42,8 +42,10 @@ const productPrismaModelDefinition: PrismaSchemaGenerator.ModelDefinition = {
       targetModelName: ProductCategory.NAME,
       isNullable: !Product.Category.REQUIRED,
       relation: {
-        fields: [ PRODUCT_CATEGORY_EXTERNAL_KEY_NAME ],
-        references: [ ProductCategory.ID.NAME ]
+        ownFields: [ PRODUCT_CATEGORY_EXTERNAL_KEY_NAME ],
+        fieldsOnOtherSideOfRelation: [ ProductCategory.ID.NAME ],
+        onUpdate: PrismaSchemaGenerator.ReferentialActions.cascade,
+        onDelete: PrismaSchemaGenerator.ReferentialActions.restrict
       }
     },
     {
