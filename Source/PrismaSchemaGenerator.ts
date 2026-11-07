@@ -469,22 +469,50 @@ namespace PrismaSchemaGenerator {
   export namespace PrismaConfiguration {
 
     /* ┅┅┅ Counterintuitive Native API ┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅ */
-    export type CounterintuitiveNativeAPI = Readonly<{
-      generator: CounterintuitiveNativeAPI.Generator;
-      client: CounterintuitiveNativeAPI.Client;
-    }>;
+    export type CounterintuitiveNativeAPI =
+
+        Readonly<{
+
+          /**
+           * @description [ Theory ] Multiple data sources are not supported.
+           * @see https://www.prisma.io/docs/orm/v7/reference/prisma-schema-reference#datasource
+           * */
+          datasource: CounterintuitiveNativeAPI.DataSource;
+
+          /** @see https://www.prisma.io/docs/orm/v7/reference/prisma-schema-reference#generator */
+          generators: ReadonlyArray<CounterintuitiveNativeAPI.Generator>;
+          // ━━━ TODO ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+          client: CounterintuitiveNativeAPI.Client;
+
+        }>;
 
     export namespace CounterintuitiveNativeAPI {
 
+      /** @see https://www.prisma.io/docs/orm/v7/reference/prisma-schema-reference#datasource */
+      export type DataSource =
+
+          Readonly<{
+            name?: string;
+            provider: SupportedDatasourceProviders;
+            relationMode?: ReferentialIntegrityEnforcers;
+            schemas?: ReadonlyArray<string>;
+            extensions?: ReadonlyArray<string>;
+          }>;
+
       /** @see https://www.prisma.io/docs/orm/v7/reference/prisma-schema-reference#generator */
-      export type Generator = Readonly<{
-        provider: string;
-        output?: string;
-        previewFeatures?: ReadonlyArray<string>;
-        engineType?: string;
-        binaryTargets?: ReadonlyArray<string>;
-        moduleFormat?: string;
-      }>;
+      export type Generator =
+
+          Readonly<{
+            name?: string;
+            provider: string;
+            output?: string;
+            previewFeatures?: ReadonlyArray<string>;
+            engineType?: QueryEngineTypes;
+            binaryTargets?: ReadonlyArray<string>;
+            moduleFormat?: ModulesFormats;
+            // ━━━ TODO ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          }>;
 
       /** @see https://www.prisma.io/docs/orm/v7/reference/prisma-schema-reference#generator */
       export type Client = Readonly<{
@@ -503,6 +531,13 @@ namespace PrismaSchemaGenerator {
 
     /* ┅┅┅ Obvious API ┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅ */
     export type ObviousAPI = Readonly<{
+
+      /**
+       * @description [ Theory ] Multiple data sources are not supported.
+       * @see https://www.prisma.io/docs/orm/v7/reference/prisma-schema-reference#datasource
+       * */
+      datasource: ObviousAPI.DataSource;
+      // ━━━ TODO ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       generatorProvider: string;
       clientOutputPathRelativeToSchemaFile: string;
       previewFeatures?: ReadonlyArray<string>;
@@ -513,8 +548,66 @@ namespace PrismaSchemaGenerator {
 
     export namespace ObviousAPI {
 
+      /** @see https://www.prisma.io/docs/orm/v7/reference/prisma-schema-reference#datasource */
+      export type DataSource = Readonly<{
+        name?: string;
+        provider: SupportedDatasourceProviders;
+        referentialIntegrityEnforcedBy?: ReferentialIntegrityEnforcers;
+        databaseSchemas?: ReadonlyArray<string>;
+        postgreSQL_Extensions?: ReadonlyArray<string>;
+      }>;
+
+      export type AssetsGenerator = Readonly<
+        { name?: string; } &
+        (
+          {
+            ID: string;
+            implementationFilePath?: never;
+          } |
+          {
+            ID?: never;
+            implementationFilePath: string;
+          }
+        ) &
+        {
+          assetsDirectoryOutputPath?: string;
+          previewFeatures?: ReadonlyArray<string>;
+          queryEngineType?: QueryEngineTypes;
+          targetRuntimes?: ReadonlyArray<string>;
+          moduleFormat?: ModulesFormats;
+          // ━━━ TODO ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        }
+      >;
+
     }
 
+  }
+
+  export enum QueryEngineTypes {
+    library = "library",
+    binary = "binary"
+  }
+
+  export enum ModulesFormats {
+    ESMAScript = "esm",
+    CommonJS = "cjs"
+  }
+
+  export enum ReferentialIntegrityEnforcers {
+    foreignKeys = "foreignKeys",
+    prisma = "prisma"
+  }
+
+  export enum TargetRuntimes {
+    NodeJS = "nodejs",
+    Deno = "deno",
+    Bun = "bun",
+    Workerd = "workerd",
+    Cloudflare = "cloudflare",
+    vercelEdge = "vercel-edge",
+    edgeLight = "edge-light",
+    reactNative = "react-native"
   }
 
   export enum SupportedDatasourceProviders {
